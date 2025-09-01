@@ -1,0 +1,308 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: pinots.pinot.io
+spec:
+  group: pinot.io
+  names:
+    kind: Pinot
+    listKind: PinotList
+    plural: pinots
+    singular: pinot
+    shortNames:
+    - pinot
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              auth:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: ["basic-auth"]
+                  secretRef:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+              plugins:
+                type: array
+                items:
+                  type: string
+              deploymentOrder:
+                type: array
+                items:
+                  type: string
+                  enum: ["controller", "broker", "server", "minion"]
+              external:
+                type: object
+                properties:
+                  zookeeper:
+                    type: object
+                    properties:
+                      spec:
+                        type: object
+                        properties:
+                          zkAddress:
+                            type: string
+                  deepStorage:
+                    type: object
+                    properties:
+                      spec:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            nodeType:
+                              type: string
+                            data:
+                              type: string
+              k8sConfig:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    image:
+                      type: string
+                    port:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          containerPort:
+                            type: integer
+                          protocol:
+                            type: string
+                    service:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        ports:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              port:
+                                type: integer
+                              targetPort:
+                                type: integer
+                              protocol:
+                                type: string
+              pinotNodeConfig:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    java_opts:
+                      type: string
+                    data:
+                      type: string
+              nodes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    kind:
+                      type: string
+                    nodeType:
+                      type: string
+                      enum: ["controller", "broker", "server", "minion"]
+                    replicas:
+                      type: integer
+                    k8sConfig:
+                      type: string
+                    pinotNodeConfig:
+                      type: string
+            required: ["deploymentOrder", "external", "k8sConfig", "pinotNodeConfig", "nodes"]
+          status:
+            type: object
+    additionalPrinterColumns:
+    - name: Age
+      type: date
+      jsonPath: .metadata.creationTimestamp
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: pinotschemas.pinot.io
+spec:
+  group: pinot.io
+  names:
+    kind: PinotSchema
+    listKind: PinotSchemaList
+    plural: pinotschemas
+    singular: pinotschema
+    shortNames:
+    - pinotschema
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              pinotCluster:
+                type: string
+              schema.json:
+                type: string
+            required: ["pinotCluster", "schema.json"]
+          status:
+            type: object
+            properties:
+              type:
+                type: string
+              status:
+                type: string
+              reason:
+                type: string
+              message:
+                type: string
+              lastUpdateTime:
+                type: string
+              currentSchemas.json:
+                type: string
+    additionalPrinterColumns:
+    - name: Age
+      type: date
+      jsonPath: .metadata.creationTimestamp
+    - name: Pinot_Cluster
+      type: string
+      jsonPath: .spec.pinotCluster
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: pinottables.pinot.io
+spec:
+  group: pinot.io
+  names:
+    kind: PinotTable
+    listKind: PinotTableList
+    plural: pinottables
+    singular: pinottable
+    shortNames:
+    - pinottable
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              pinotCluster:
+                type: string
+              pinotSchema:
+                type: string
+              pinotTableType:
+                type: string
+                enum: ["realtime", "offline", "hybrid"]
+              tables.json:
+                type: string
+              segmentReload:
+                type: boolean
+            required: ["pinotCluster", "pinotSchema", "pinotTableType", "tables.json"]
+          status:
+            type: object
+            properties:
+              type:
+                type: string
+              status:
+                type: string
+              reason:
+                type: string
+              message:
+                type: string
+              lastUpdateTime:
+                type: string
+              currentTable.json:
+                type: string
+              reloadStatus:
+                type: array
+                items:
+                  type: string
+    additionalPrinterColumns:
+    - name: Age
+      type: date
+      jsonPath: .metadata.creationTimestamp
+    - name: Pinot_Cluster
+      type: string
+      jsonPath: .spec.pinotCluster
+    - name: Pinot_Schema
+      type: string
+      jsonPath: .spec.pinotSchema
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: pinottenants.pinot.io
+spec:
+  group: pinot.io
+  names:
+    kind: PinotTenant
+    listKind: PinotTenantList
+    plural: pinottenants
+    singular: pinottenant
+    shortNames:
+    - pinottenant
+  scope: Namespaced
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              pinotCluster:
+                type: string
+              tenantConfig:
+                type: string
+            required: ["pinotCluster", "tenantConfig"]
+          status:
+            type: object
+            properties:
+              type:
+                type: string
+              status:
+                type: string
+              reason:
+                type: string
+              message:
+                type: string
+              lastUpdateTime:
+                type: string
+    additionalPrinterColumns:
+    - name: Age
+      type: date
+      jsonPath: .metadata.creationTimestamp

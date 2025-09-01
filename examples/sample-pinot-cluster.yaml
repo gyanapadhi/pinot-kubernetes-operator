@@ -1,0 +1,123 @@
+apiVersion: pinot.io/v1
+kind: Pinot
+metadata:
+  name: sample-pinot-cluster
+  namespace: default
+  labels:
+    app: pinot
+    environment: development
+spec:
+  # Deployment order - nodes will be deployed in this sequence
+  deploymentOrder:
+    - controller
+    - broker
+    - server
+    - minion
+  
+  # External dependencies
+  external:
+    zookeeper:
+      spec:
+        zkAddress: "zookeeper:2181"
+    deepStorage:
+      spec:
+        - nodeType: server
+          data: "/data"
+  
+  # Kubernetes-specific configurations
+  k8sConfig:
+    - name: controller-config
+      image: "apachepinot/pinot:latest"
+      port:
+        - containerPort: 9000
+          protocol: TCP
+      service:
+        type: ClusterIP
+        ports:
+          - port: 9000
+            targetPort: 9000
+            protocol: TCP
+    
+    - name: broker-config
+      image: "apachepinot/pinot:latest"
+      port:
+        - containerPort: 8099
+          protocol: TCP
+      service:
+        type: ClusterIP
+        ports:
+          - port: 8099
+            targetPort: 8099
+            protocol: TCP
+    
+    - name: server-config
+      image: "apachepinot/pinot:latest"
+      port:
+        - containerPort: 8098
+          protocol: TCP
+      service:
+        type: ClusterIP
+        ports:
+          - port: 8098
+            targetPort: 8098
+            protocol: TCP
+    
+    - name: minion-config
+      image: "apachepinot/pinot:latest"
+      port:
+        - containerPort: 8097
+          protocol: TCP
+      service:
+        type: ClusterIP
+        ports:
+          - port: 8097
+            targetPort: 8097
+            protocol: TCP
+  
+  # Pinot-specific configurations
+  pinotNodeConfig:
+    - name: controller-config
+      java_opts: "-Xmx1g -Xms1g"
+      data: "/data"
+    
+    - name: broker-config
+      java_opts: "-Xmx2g -Xms2g"
+      data: "/data"
+    
+    - name: server-config
+      java_opts: "-Xmx4g -Xms4g"
+      data: "/data"
+    
+    - name: minion-config
+      java_opts: "-Xmx2g -Xms2g"
+      data: "/data"
+  
+  # Node specifications
+  nodes:
+    - name: controller
+      kind: Deployment
+      nodeType: controller
+      replicas: 1
+      k8sConfig: controller-config
+      pinotNodeConfig: controller-config
+    
+    - name: broker
+      kind: Deployment
+      nodeType: broker
+      replicas: 2
+      k8sConfig: broker-config
+      pinotNodeConfig: broker-config
+    
+    - name: server
+      kind: Deployment
+      nodeType: server
+      replicas: 3
+      k8sConfig: server-config
+      pinotNodeConfig: server-config
+    
+    - name: minion
+      kind: Deployment
+      nodeType: minion
+      replicas: 2
+      k8sConfig: minion-config
+      pinotNodeConfig: minion-config

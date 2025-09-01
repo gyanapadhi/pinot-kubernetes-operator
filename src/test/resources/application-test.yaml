@@ -1,0 +1,23 @@
+# Test configuration for Pinot Control Plane Operator
+  
+# Disable Kubernetes client for testing
+spring:
+  kubernetes:
+    enabled: false
+
+# Operator configuration for testing
+pinot:
+  operator:
+    reconciliation-interval: 1000
+    watcher-reconnect-delay: 1000
+  
+  cluster:
+    default-controller-port: 9050
+    default-broker-port: 8099
+
+# Logging for tests
+logging:
+  level:
+    io.pinot.operator: DEBUG
+    org.springframework: WARN
+    io.fabric8: WARN

@@ -1,0 +1,144 @@
+version: '3.8'
+
+services:
+  # Zookeeper - Required for Pinot
+  zookeeper:
+    image: zookeeper:3.8.1
+    container_name: pinot-zookeeper
+    ports:
+      - "2182:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=0.0.0.0:2888:3888;2181
+    volumes:
+      - zookeeper_data:/data
+      - zookeeper_logs:/datalog
+    healthcheck:
+      test: ["CMD", "zkServer.sh", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Pinot Controller
+  pinot-controller:
+    image: apachepinot/pinot:1.0.0
+    container_name: pinot-controller
+    ports:
+      - "9050:9000"
+      - "8091:8090"
+    environment:
+      JAVA_OPTS: "-Xmx1g -Xms1g"
+    command: >
+      sh -c "
+        echo 'Waiting for Zookeeper to be ready...' &&
+        while ! nc -z zookeeper 2181; do sleep 1; done &&
+        echo 'Starting Pinot Controller...' &&
+        /opt/pinot/bin/pinot-admin.sh StartController -zkAddress zookeeper:2181
+      "
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Pinot Broker
+  pinot-broker:
+    image: apachepinot/pinot:1.0.0
+    container_name: pinot-broker
+    ports:
+      - "8099:8099"
+    environment:
+      JAVA_OPTS: "-Xmx2g -Xms2g"
+    command: >
+      sh -c "
+        echo 'Waiting for Controller to be ready...' &&
+        while ! curl -f http://pinot-controller:9000/health; do sleep 5; done &&
+        echo 'Starting Pinot Broker...' &&
+        /opt/pinot/bin/pinot-admin.sh StartBroker -zkAddress zookeeper:2181
+      "
+    depends_on:
+      pinot-controller:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8099/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Pinot Server
+  pinot-server:
+    image: apachepinot/pinot:1.0.0
+    container_name: pinot-server
+    ports:
+      - "8098:8098"
+    environment:
+      JAVA_OPTS: "-Xmx4g -Xms4g"
+    command: >
+      sh -c "
+        echo 'Waiting for Controller to be ready...' &&
+        while ! curl -f http://pinot-controller:9000/health; do sleep 5; done &&
+        echo 'Starting Pinot Server...' &&
+        /opt/pinot/bin/pinot-admin.sh StartServer -zkAddress zookeeper:2181
+      "
+    depends_on:
+      pinot-controller:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8098/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Pinot Minion (Optional - for data processing)
+  pinot-minion:
+    image: apachepinot/pinot:1.0.0
+    container_name: pinot-minion
+    ports:
+      - "8097:8097"
+    environment:
+      JAVA_OPTS: "-Xmx2g -Xms2g"
+    command: >
+      sh -c "
+        echo 'Waiting for Controller to be ready...' &&
+        while ! curl -f http://pinot-controller:9000/health; do sleep 5; done &&
+        echo 'Starting Pinot Minion...' &&
+        /opt/pinot/bin/pinot-admin.sh StartMinion -zkAddress zookeeper:2181
+      "
+    depends_on:
+      pinot-controller:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8097/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Pinot Quickstart (Alternative - all-in-one setup)
+  pinot-quickstart:
+    image: apachepinot/pinot:1.0.0
+    container_name: pinot-quickstart
+    ports:
+      - "9050:9000"
+      - "8099:8099"
+      - "8098:8098"
+      - "8097:8097"
+    environment:
+      JAVA_OPTS: "-Xmx4g -Xms4g"
+    command: ["/opt/pinot/bin/pinot-admin.sh", "QuickStart", "-type", "local"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  zookeeper_data:
+  zookeeper_logs:

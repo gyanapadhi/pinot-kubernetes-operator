@@ -1,0 +1,82 @@
+apiVersion: pinot.io/v1
+kind: PinotSchema
+metadata:
+  name: user-schema
+  namespace: default
+  labels:
+    app: pinot
+    schema: user
+spec:
+  pinotCluster: sample-pinot-cluster
+  schema.json: |
+    {
+      "schemaName": "user",
+      "dimensionFieldSpecs": [
+        {
+          "name": "userId",
+          "dataType": "STRING",
+          "description": "Unique user identifier"
+        },
+        {
+          "name": "firstName",
+          "dataType": "STRING",
+          "description": "User's first name"
+        },
+        {
+          "name": "lastName",
+          "dataType": "STRING",
+          "description": "User's last name"
+        },
+        {
+          "name": "email",
+          "dataType": "STRING",
+          "description": "User's email address"
+        },
+        {
+          "name": "age",
+          "dataType": "INT",
+          "description": "User's age"
+        },
+        {
+          "name": "city",
+          "dataType": "STRING",
+          "description": "User's city"
+        },
+        {
+          "name": "country",
+          "dataType": "STRING",
+          "description": "User's country"
+        },
+        {
+          "name": "registrationDate",
+          "dataType": "TIMESTAMP",
+          "description": "User registration date"
+        }
+      ],
+      "metricFieldSpecs": [
+        {
+          "name": "loginCount",
+          "dataType": "LONG",
+          "description": "Number of user logins"
+        },
+        {
+          "name": "lastLoginTime",
+          "dataType": "TIMESTAMP",
+          "description": "Last login timestamp"
+        }
+      ],
+      "dateTimeFieldSpecs": [
+        {
+          "name": "registrationDate",
+          "dataType": "TIMESTAMP",
+          "format": "1:MILLISECONDS:EPOCH",
+          "granularity": "1:MILLISECONDS"
+        },
+        {
+          "name": "lastLoginTime",
+          "dataType": "TIMESTAMP",
+          "format": "1:MILLISECONDS:EPOCH",
+          "granularity": "1:MILLISECONDS"
+        }
+      ]
+    }

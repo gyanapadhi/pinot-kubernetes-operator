@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pinot-operator
+  labels:
+    name: pinot-operator
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pinot-operator
+  namespace: pinot-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pinot-operator
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "persistentvolumeclaims", "events", "configmaps", "secrets"]
+  verbs: ["*"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "daemonsets", "replicasets", "statefulsets"]
+  verbs: ["*"]
+- apiGroups: ["extensions"]
+  resources: ["deployments", "daemonsets", "replicasets", "statefulsets"]
+  verbs: ["*"]
+- apiGroups: ["pinot.io"]
+  resources: ["pinots", "pinotschemas", "pinottables", "pinottenants"]
+  verbs: ["*"]
+- apiGroups: ["pinot.io"]
+  resources: ["pinots/status", "pinotschemas/status", "pinottables/status", "pinottenants/status"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pinot-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pinot-operator
+subjects:
+- kind: ServiceAccount
+  name: pinot-operator
+  namespace: pinot-operator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pinot-operator
+  namespace: pinot-operator
+  labels:
+    app: pinot-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pinot-operator
+  template:
+    metadata:
+      labels:
+        app: pinot-operator
+    spec:
+      serviceAccountName: pinot-operator
+      containers:
+      - name: pinot-operator
+        image: pinot-kubernetes-operator:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 8081
+          name: health
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "kubernetes"
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pinot-operator
+  namespace: pinot-operator
+  labels:
+    app: pinot-operator
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  - port: 8081
+    targetPort: 8081
+    protocol: TCP
+    name: health
+  selector:
+    app: pinot-operator

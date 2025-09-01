@@ -1,0 +1,83 @@
+apiVersion: pinot.io/v1
+kind: PinotTable
+metadata:
+  name: test-table
+  namespace: default
+  labels:
+    app: pinot
+    table: test
+    test: true
+spec:
+  pinotCluster: test-pinot-cluster
+  pinotSchema: test-schema
+  pinotTableType: offline
+  segmentReload: true
+  tables.json: |
+    {
+      "tableName": "test_table",
+      "tableType": "OFFLINE",
+      "segmentsConfig": {
+        "timeColumnName": "timestamp",
+        "schemaName": "test_table",
+        "replication": "1",
+        "replicasPerPartition": "1"
+      },
+      "tenants": {
+        "broker": "DefaultTenant",
+        "server": "DefaultTenant"
+      },
+      "tableIndexConfig": {
+        "loadMode": "MMAP",
+        "lazyLoad": false
+      },
+      "metadata": {
+        "customConfigs": {
+          "dictionaryBasedInvertedIndex": "false",
+          "optimizeDictionary": "true",
+          "optimizeDictionaryForMetrics": "true",
+          "nullHandlingEnabled": "true"
+        }
+      },
+      "fieldConfigList": [
+        {
+          "name": "id",
+          "encodingType": "DICTIONARY",
+          "indexType": "INVERTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        },
+        {
+          "name": "name",
+          "encodingType": "DICTIONARY",
+          "indexType": "INVERTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        },
+        {
+          "name": "category",
+          "encodingType": "DICTIONARY",
+          "indexType": "INVERTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        },
+        {
+          "name": "value",
+          "encodingType": "RAW",
+          "indexType": "SORTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        },
+        {
+          "name": "count",
+          "encodingType": "RAW",
+          "indexType": "SORTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        }
+      ]
+    }

@@ -1,0 +1,61 @@
+apiVersion: pinot.io/v1
+kind: PinotTenant
+metadata:
+  name: analytics-tenant
+  namespace: default
+  labels:
+    app: pinot
+    tenant: analytics
+spec:
+  pinotCluster: sample-pinot-cluster
+  tenantConfig: |
+    {
+      "tenantRole": "BROKER",
+      "numberOfInstances": 1,
+      "name": "analytics-tenant",
+      "instanceAssignmentConfigMap": {
+        "OFFLINE": {
+          "numInstances": 1,
+          "tagPoolConfig": {
+            "tag": "DefaultTenant_BROKER"
+          }
+        },
+        "REALTIME": {
+          "numInstances": 1,
+          "tagPoolConfig": {
+            "tag": "DefaultTenant_BROKER"
+          }
+        }
+      }
+    }
+---
+apiVersion: pinot.io/v1
+kind: PinotTenant
+metadata:
+  name: server-tenant
+  namespace: default
+  labels:
+    app: pinot
+    tenant: server
+spec:
+  pinotCluster: sample-pinot-cluster
+  tenantConfig: |
+    {
+      "tenantRole": "SERVER",
+      "numberOfInstances": 3,
+      "name": "server-tenant",
+      "instanceAssignmentConfigMap": {
+        "OFFLINE": {
+          "numInstances": 3,
+          "tagPoolConfig": {
+            "tag": "DefaultTenant_OFFLINE"
+          }
+        },
+        "REALTIME": {
+          "numInstances": 3,
+          "tagPoolConfig": {
+            "tag": "DefaultTenant_REALTIME"
+          }
+        }
+      }
+    }

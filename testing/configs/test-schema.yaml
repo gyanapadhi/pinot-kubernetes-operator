@@ -1,0 +1,57 @@
+apiVersion: pinot.io/v1
+kind: PinotSchema
+metadata:
+  name: test-schema
+  namespace: default
+  labels:
+    app: pinot
+    schema: test
+    test: true
+spec:
+  pinotCluster: test-pinot-cluster
+  schema.json: |
+    {
+      "schemaName": "test_table",
+      "dimensionFieldSpecs": [
+        {
+          "name": "id",
+          "dataType": "STRING",
+          "description": "Unique identifier"
+        },
+        {
+          "name": "name",
+          "dataType": "STRING",
+          "description": "Name field"
+        },
+        {
+          "name": "category",
+          "dataType": "STRING",
+          "description": "Category field"
+        },
+        {
+          "name": "timestamp",
+          "dataType": "TIMESTAMP",
+          "description": "Timestamp field"
+        }
+      ],
+      "metricFieldSpecs": [
+        {
+          "name": "value",
+          "dataType": "DOUBLE",
+          "description": "Numeric value"
+        },
+        {
+          "name": "count",
+          "dataType": "LONG",
+          "description": "Count field"
+        }
+      ],
+      "dateTimeFieldSpecs": [
+        {
+          "name": "timestamp",
+          "dataType": "TIMESTAMP",
+          "format": "1:MILLISECONDS:EPOCH",
+          "granularity": "1:MILLISECONDS"
+        }
+      ]
+    }

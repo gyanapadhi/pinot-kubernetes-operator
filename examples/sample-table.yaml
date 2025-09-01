@@ -1,0 +1,91 @@
+apiVersion: pinot.io/v1
+kind: PinotTable
+metadata:
+  name: user-table
+  namespace: default
+  labels:
+    app: pinot
+    table: user
+    type: offline
+spec:
+  pinotCluster: sample-pinot-cluster
+  pinotSchema: user-schema
+  pinotTableType: offline
+  segmentReload: true
+  tables.json: |
+    {
+      "tableName": "user",
+      "tableType": "OFFLINE",
+      "segmentsConfig": {
+        "timeColumnName": "registrationDate",
+        "schemaName": "user",
+        "replication": "1",
+        "replicasPerPartition": "1"
+      },
+      "tenants": {
+        "broker": "DefaultTenant",
+        "server": "DefaultTenant"
+      },
+      "tableIndexConfig": {
+        "loadMode": "MMAP",
+        "lazyLoad": false
+      },
+      "metadata": {
+        "customConfigs": {
+          "dictionaryBasedInvertedIndex": "false",
+          "optimizeDictionary": "true",
+          "optimizeDictionaryForMetrics": "true",
+          "nullHandlingEnabled": "true"
+        }
+      },
+      "fieldConfigList": [
+        {
+          "name": "userId",
+          "encodingType": "DICTIONARY",
+          "indexType": "INVERTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        },
+        {
+          "name": "email",
+          "encodingType": "DICTIONARY",
+          "indexType": "INVERTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        },
+        {
+          "name": "city",
+          "encodingType": "DICTIONARY",
+          "indexType": "INVERTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        },
+        {
+          "name": "country",
+          "encodingType": "DICTIONARY",
+          "indexType": "INVERTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        },
+        {
+          "name": "age",
+          "encodingType": "RAW",
+          "indexType": "SORTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        },
+        {
+          "name": "loginCount",
+          "encodingType": "RAW",
+          "indexType": "SORTED",
+          "properties": {
+            "deriveNumDocsPerChunkForForwardIndex": "true"
+          }
+        }
+      ]
+    }
